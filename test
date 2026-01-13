@@ -1,88 +1,53 @@
-// CW Name / ID dropdown
-const [selectedCWWorkspaces, setSelectedCWWorkspaces] = useState<
-  { id: string; label: string }[]
->([]);
+react-dom.development.js:18704 
+ The above error occurred in the <MultiSelectSearchableDropdown> component:
 
-// Ariba Name dropdown
-const [selectedAribaWorkspaces, setSelectedAribaWorkspaces] = useState<
-  { id: string; label: string }[]
->([]);
+    at MultiSelectSearchableDropdown (http://44.79.136.180:5173/src/components/MultiSelectSearchableDropdown/MultiSelectSearchableDropdown.tsx:39:3)
+    at div
+    at http://44.79.136.180:5173/node_modules/.vite/deps/chunk-MBL7T2SR.js?v=4472897c:650:45
+    at Box3 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:3250:19)
+    at div
+    at http://44.79.136.180:5173/node_modules/.vite/deps/chunk-MBL7T2SR.js?v=4472897c:650:45
+    at Box3 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:3250:19)
+    at div
+    at http://44.79.136.180:5173/node_modules/.vite/deps/chunk-MBL7T2SR.js?v=4472897c:650:45
+    at Grid3 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:5464:19)
+    at div
+    at http://44.79.136.180:5173/node_modules/.vite/deps/chunk-MBL7T2SR.js?v=4472897c:650:45
+    at Grid3 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:5464:19)
+    at div
+    at http://44.79.136.180:5173/node_modules/.vite/deps/chunk-MBL7T2SR.js?v=4472897c:650:45
+    at Grid3 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:5464:19)
+    at div
+    at http://44.79.136.180:5173/node_modules/.vite/deps/chunk-MBL7T2SR.js?v=4472897c:650:45
+    at Grid3 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:5464:19)
+    at Chat (http://44.79.136.180:5173/src/pages/chat/Chat.tsx:55:17)
+    at RenderedRoute (http://44.79.136.180:5173/node_modules/.vite/deps/react-router-dom.js?v=4472897c:4103:5)
+    at Outlet (http://44.79.136.180:5173/node_modules/.vite/deps/react-router-dom.js?v=4472897c:4510:26)
+    at main
+    at div
+    at DefaultLayout (http://44.79.136.180:5173/src/components/defaultLayout/DefaultLayout.tsx:35:17)
+    at PrivateRoute (http://44.79.136.180:5173/src/index.tsx:222:3)
+    at RenderedRoute (http://44.79.136.180:5173/node_modules/.vite/deps/react-router-dom.js?v=4472897c:4103:5)
+    at Routes (http://44.79.136.180:5173/node_modules/.vite/deps/react-router-dom.js?v=4472897c:4574:5)
+    at ErrorBoundary (http://44.79.136.180:5173/src/components/error/ErrorBoundary.tsx:23:5)
+    at DefaultPropsProvider (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:3813:3)
+    at RtlProvider (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:3789:3)
+    at ThemeProvider (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:3745:5)
+    at ThemeProvider2 (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-OJMOFHGA.js?v=4472897c:3940:5)
+    at ThemeProviderNoVars (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-GZMOXNTP.js?v=4472897c:275:10)
+    at ThemeProvider (http://44.79.136.180:5173/node_modules/.vite/deps/chunk-GZMOXNTP.js?v=4472897c:357:3)
+    at Router (http://44.79.136.180:5173/node_modules/.vite/deps/react-router-dom.js?v=4472897c:4517:15)
+    at BrowserRouter (http://44.79.136.180:5173/node_modules/.vite/deps/react-router-dom.js?v=4472897c:5266:5)
+    at Provider (http://44.79.136.180:5173/node_modules/.vite/deps/react-redux.js?v=4472897c:935:11)
+    at AppStateProvider (http://44.79.136.180:5173/src/state/AppProvider.tsx:37:3)
+    at RendererProvider (http://44.79.136.180:5173/node_modules/.vite/deps/@griffel_react.js?v=4472897c:2634:3)
+    at App
 
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+ErrorBoundary.tsx:26 
+ Error caught by Error Boundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at MultiSelectSearchableDropdown (MultiSelectSearchableDropdown.tsx:90:22)
+ 
+{componentStack: '\n    at MultiSelectSearchableDropdown (http://44.7…s/@griffel_react.js?v=4472897c:2634:3)\n    at App'}
+﻿
 
-const handleCWWorkspaceChange = (selectedIds: string[]) => {
-  setSelectedCWWorkspaces((prev) =>
-    prev.filter((w) => selectedIds.includes(w.id))
-  );
-};
-
-const handleAribaWorkspaceChange = (selectedIds: string[]) => {
-  setSelectedAribaWorkspaces((prev) =>
-    prev.filter((w) => selectedIds.includes(w.id))
-  );
-};
-
-
-const searchByCWName = async (
-  term: string,
-  offset: number,
-  limit: number
-) => {
-  const res = await getContractsForDropdowns(term, offset, limit);
-  const payload = res.data;
-
-  return {
-    options: payload.contracts.map((c: any) => ({
-      id: String(c.contract_id),
-      label: c.contract_workspace,
-    })),
-    hasMore: payload.has_more,
-  };
-};
-
-const searchByAribaName = async (
-  term: string,
-  offset: number,
-  limit: number
-) => {
-  const res = await getContractsForDropdowns(term, offset, limit);
-  const payload = res.data;
-
-  return {
-    options: payload.contracts.map((c: any) => ({
-      id: String(c.contract_id),
-      label: c.ariba_contract_ws_name, // 👈 DIFFERENCE
-    })),
-    hasMore: payload.has_more,
-  };
-};
-
-
-
-
-
-
-
-
-
-
-
-<MultiSelectSearchableDropdown
-  selectedValues={selectedCWWorkspaces.map((w) => w.id)}
-  onSelect={handleCWWorkspaceChange}
-  placeholder="Contract Workspace (CW Name / ID)"
-  selectionLimit={50}
-  pageSize={100}
-  debounceMs={400}
-  onSearchRequest={searchByCWName}
-/>
-
-
-<MultiSelectSearchableDropdown
-  selectedValues={selectedAribaWorkspaces.map((w) => w.id)}
-  onSelect={handleAribaWorkspaceChange}
-  placeholder="Contract Workspace (Ariba Name)"
-  selectionLimit={50}
-  pageSize={100}
-  debounceMs={400}
-  onSearchRequest={searchByAribaName}
-/>
