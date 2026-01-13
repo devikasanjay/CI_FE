@@ -1,23 +1,46 @@
-useEffect(() => {
-  const merged = [
-    ...selectedCWWorkspaces,
-    ...selectedAribaWorkspaces,
-  ];
+const searchCWDropdown = async (
+  term: string,
+  offset: number,
+  limit: number
+) => {
+  const res = await getContractsForDropdowns(term, offset, limit);
 
-  // Remove duplicates by id
-  const unique = Array.from(
-    new Map(merged.map((w) => [w.id, w])).values()
-  );
+  return {
+    options: res.options.map((o) => ({
+      id: o.id,
+      label: o.label, // CW name
+    })),
+    hasMore: res.hasMore,
+  };
+};
 
-  setSelectedWorkspace(unique);
-}, [selectedCWWorkspaces, selectedAribaWorkspaces]);
+const searchAribaDropdown = async (
+  term: string,
+  offset: number,
+  limit: number
+) => {
+  const res = await getContractsForDropdowns(term, offset, limit);
 
+  return {
+    options: res.options.map((o) => ({
+      id: o.id,
+      label: o.label, // backend already includes ariba name if present
+    })),
+    hasMore: res.hasMore,
+  };
+};
 
+const updateSelectedWorkspaces = (
+  cw: { id: string; label: string }[],
+  ariba: { id: string; label: string }[]
+) => {
+  const map = new Map<string, ContractWorkspace>();
 
+  [...cw, ...ariba].forEach((w) => {
+    map.set(w.id, { id: w.id, label: w.label });
+  });
 
+  setSelectedWorkspace(Array.from(map.values()));
+};
 
-
-
-
-﻿
 
