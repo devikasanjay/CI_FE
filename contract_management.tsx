@@ -1563,12 +1563,12 @@ const ContractManagement = () => {
 										</Tooltip>
 									</Box>
 									<MultiSelectSearchableDropdown
-										selectedValues={selectedTemplates.map(t => t.panel_id)}
+										options={templateOptions}
+										selectedValues={Array.isArray(selectedTemplates) ? selectedTemplates.map(t => t.panel_id) : []}
 										onSelect={handleTemplateChange}
-										onFetch{(search,offset,limit) =>
-                                            getContractsForDropdowns(search, offset, limit)
-                                        }
 										placeholder="Select Your Analysis Templates"
+										disabled={files.length > 0}
+										selectionLimit={0} // Allow unlimited selection, enabling "Select All"
 									/>
 								</Box>
 							</Grid>
