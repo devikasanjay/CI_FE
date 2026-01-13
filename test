@@ -1,90 +1,24 @@
-/** Scroll pagination */
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget;
+const CONTRACT_PAGE_SIZE = 100;
 
-    if (
-      target.scrollTop + target.clientHeight >=
-        target.scrollHeight - 20 &&
-      hasMore &&
-      !loading
-    ) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchPage(nextPage);
-    }
-  };
-
-  const toggleSelection = (id: string) => {
-    if (selectedValues.includes(id)) {
-      onSelect(selectedValues.filter(v => v !== id));
-    } else {
-      onSelect([...selectedValues, id]);
-    }
-  };
-
-  const renderValue = (selected: string[]) => {
-    if (selected.length === 0) {
-      return <em>{placeholder}</em>;
-    }
-
-    const labels = selected
-      .map(id => optionsCache.get(id)?.label)
-      .filter(Boolean);
-
-    if (labels.length <= 2) return labels.join(", ");
-    return `${labels.length} selected`;
-  };
-
-  return (
-    <FormControl fullWidth>
-      <Select
-        multiple
-        open={open}
-        onOpen={() => setOpen(true)}
-        onClose={() => setOpen(false)}
-        value={selectedValues}
-        input={<OutlinedInput />}
-        renderValue={renderValue}
-        MenuProps={{
-          PaperProps: {
-            style: { maxHeight: 320 },
-            onScroll: handleScroll,
-          },
-        }}
-      >
-        {/* Search box */}
-        <Box sx={{ p: 1 }} onClick={e => e.stopPropagation()}>
-          <TextField
-            fullWidth
-            placeholder="Search contracts..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            variant="standard"
-          />
-        </Box>
-
-        {displayedOptions.map(opt => (
-          <MenuItem
-            key={opt.id}
-            onClick={() => toggleSelection(opt.id)}
-          >
-            <Checkbox checked={selectedValues.includes(opt.id)} />
-            <ListItemText primary={opt.label} />
-          </MenuItem>
-        ))}
-
-        {loading && (
-          <MenuItem disabled>
-            <CircularProgress size={20} />
-          </MenuItem>
-        )}
-
-        {!loading && displayedOptions.length === 0 && (
-          <MenuItem disabled>
-            <ListItemText primary="No results found" />
-          </MenuItem>
-        )}
-      </Select>
-    </FormControl>
+const fetchContracts = async (
+  search: string,
+  offset: number
+): Promise<{
+  items: ContractWorkspace[];
+  hasMore: boolean;
+}> => {
+  const res = await fetch(
+    `/api/contract-mgmt/only_contracts?name=${encodeURIComponent(search)}&offset=${offset}&limit=${CONTRACT_PAGE_SIZE}`
   );
+
+  const json = await res.json();
+  const data = json.data;
+
+  return {
+    items: data.contracts.map((c: any) => ({
+      id: String(c.contract_id),
+      label: c.contract_workspace,
+    })),
+    hasMore: data.has_more,
+  };
 };
