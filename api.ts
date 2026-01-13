@@ -711,7 +711,7 @@ export const getContractsForDropdowns = async (
 	offset?: number,
 	limit?: number
 ): Promise<{
-    items: { id: string, label: string}[];
+    options: { id: string, label: string}[];
     hasMore: boolean;
 }> => {
 	try {
@@ -726,13 +726,21 @@ export const getContractsForDropdowns = async (
 		const response = await fetchWithAuth(`${host}/contract-mgmt/only_contracts?${queryParams.toString()}`, {
 			method: 'GET',
 		});
-		const data = await response.json();
+        const payload = response.data?.data;
+
+        if(!payload){
+            return{
+                options: [],
+                hasMore: false,
+            };
+        }
+
 		return {
-            items: data.contracts.map((c: any) => ({
+            options: payload.contracts.map((c: any) => ({
                 id: String(c.contract_id),
                 label: c.contract_workspace,
             })),
-            hasMore: data.has_more,
+            hasMore: payload.has_more == true,
             };
 	} catch (error) {
 		console.error("Error executing get contract list:", error);
