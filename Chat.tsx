@@ -1061,6 +1061,19 @@ const Chat = () => {
     setContractDropdownType(value);
   }
 
+  const CONTRACT_PAGE_SIZE = 100;
+
+  const handleContractSearch = async (
+      searchTerm: string;
+      offset: number
+  ) => {
+      return await getContractsForDropdowns(
+          searchTerm,
+          offset,
+          CONTRACT_PAGE_SIZE
+          );
+      };
+
   const fetchWorkspaces = async () => {
     setLoading(true);
     setError(null);
@@ -1178,7 +1191,7 @@ const Chat = () => {
                     ? selectedWorkspace.map((workspace) => workspace.id)
                     : []
                   }
-                  onSelect={handleWorkspaceChange}
+                  onSelect={handleContractSearch}
                   placeholder="Contract Workspaces By Id"
                   selectionLimit={50}
                   onSearchRequest={searchWorkspacesByCWName}
@@ -1192,7 +1205,7 @@ const Chat = () => {
                     ? selectedWorkspace.map((workspace) => workspace.id)
                     : []
                   }
-                  onSelect={handleWorkspaceChange}
+                  onSelect={handleContractSearch}
                   placeholder="Contract Workspaces By Name"
                   selectionLimit={50}
                   onSearchRequest={searchWorkspacesByAribaName}
