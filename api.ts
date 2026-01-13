@@ -708,18 +708,32 @@ export const getContractList = async (
 
 export const getContractsForDropdowns = async (
 	searchTerm: string,
-): Promise<any> => {
+	offset?: number,
+	limit?: number
+): Promise<{
+    items: { id: string, label: string}[];
+    hasMore: boolean;
+}> => {
 	try {
 		// Build query parameters
 		const queryParams = new URLSearchParams();
 
 		if (searchTerm) queryParams.append('name', searchTerm);
+		if (offset !== undefined && offset !== null) queryParams.append("offset", String(offset));
+		if (limit !== undefined && limit !== null) queryParams.append("limit", String(limit));
 
+        console.log(`offset: ${offset}, limit: ${limit}`);
 		const response = await fetchWithAuth(`${host}/contract-mgmt/only_contracts?${queryParams.toString()}`, {
 			method: 'GET',
 		});
 		const data = await response.json();
-		return data;
+		return {
+            items: data.contracts.map((c: any) => ({
+                id: String(c.contract_id),
+                label: c.contract_workspace,
+            })),
+            hasMore: data.has_more,
+            };
 	} catch (error) {
 		console.error("Error executing get contract list:", error);
 		let errorMessage = 'Failed to fetch contract list';
