@@ -1238,6 +1238,8 @@ async def get_file_list(
 async def get_only_contract_workspace_list(
     request: Request,
     name: Optional[str] = None,
+    offset: Optional[int] = Query(0, description= "offset"),
+    limit:  Optional[int] = Query(100, description="limit")
 ):
     try:
         logger.info("Fetching contract workspace list")
@@ -1245,8 +1247,8 @@ async def get_only_contract_workspace_list(
 
         response = c.get_contract_workspaces_only(
             contract_workspace_name=name,
-            offset=0,
-            limit=100
+            offset=offset,
+            limit=limit
         )
 
         return JSONResponse(
