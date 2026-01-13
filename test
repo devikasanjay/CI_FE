@@ -1,24 +1,233 @@
-const CONTRACT_PAGE_SIZE = 100;
+import * as React from "react";
+import {
+  FormControl,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
+  TextField,
+  Box,
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 
-const fetchContracts = async (
-  search: string,
-  offset: number
-): Promise<{
+interface ContractWorkspace {
+  id: string;
+  label: string;
+}
+
+interface SearchResult {
   items: ContractWorkspace[];
   hasMore: boolean;
-}> => {
-  const res = await fetch(
-    `/api/contract-mgmt/only_contracts?name=${encodeURIComponent(search)}&offset=${offset}&limit=${CONTRACT_PAGE_SIZE}`
-  );
+}
 
-  const json = await res.json();
-  const data = json.data;
+interface Props {
+  options?: ContractWorkspace[]; // optional for client-side mode
+  selectedValues: string[];
+  onSelect: (selected: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  selectionLimit?: number;
 
-  return {
-    items: data.contracts.map((c: any) => ({
-      id: String(c.contract_id),
-      label: c.contract_workspace,
-    })),
-    hasMore: data.has_more,
+  /** SERVER-SIDE MODE */
+  onSearchRequest?: (
+    term: string,
+    offset: number
+  ) => Promise<SearchResult>;
+
+  debounceMs?: number;
+}
+
+const PAGE_SIZE = 100;
+
+export const MultiSelectSearchableDropdown: React.FC<Props> = ({
+  options = [],
+  selectedValues,
+  onSelect,
+  placeholder = "Select options",
+  disabled = false,
+  selectionLimit = 0,
+  onSearchRequest,
+  debounceMs = 350,
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [displayedOptions, setDisplayedOptions] = React.useState<
+    ContractWorkspace[]
+  >([]);
+
+  const [offset, setOffset] = React.useState(0);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [loading, setLoading] = React.useState(false);
+
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  const canSelectMore =
+    selectionLimit === 0 || selectedValues.length < selectionLimit;
+
+  /* ---------------------------------------------
+     OPEN → INITIAL LOAD (FIRST 100)
+  --------------------------------------------- */
+  React.useEffect(() => {
+    if (!open) return;
+
+    if (!onSearchRequest) {
+      setDisplayedOptions(options);
+      return;
+    }
+
+    (async () => {
+      setLoading(true);
+      setOffset(0);
+
+      const res = await onSearchRequest("", 0);
+
+      setDisplayedOptions(res.items);
+      setHasMore(res.hasMore);
+      setOffset(res.items.length);
+
+      setLoading(false);
+    })();
+  }, [open]);
+
+  /* ---------------------------------------------
+     SEARCH (GLOBAL, PAGINATED)
+  --------------------------------------------- */
+  React.useEffect(() => {
+    if (!open || !onSearchRequest) return;
+
+    const handler = setTimeout(async () => {
+      setLoading(true);
+      setOffset(0);
+
+      const res = await onSearchRequest(searchTerm.trim(), 0);
+
+      setDisplayedOptions(res.items);
+      setHasMore(res.hasMore);
+      setOffset(res.items.length);
+
+      setLoading(false);
+    }, debounceMs);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  /* ---------------------------------------------
+     LOAD MORE
+  --------------------------------------------- */
+  const handleLoadMore = async () => {
+    if (!onSearchRequest || loading || !hasMore) return;
+
+    setLoading(true);
+
+    const res = await onSearchRequest(searchTerm.trim(), offset);
+
+    setDisplayedOptions((prev) => [...prev, ...res.items]);
+    setHasMore(res.hasMore);
+    setOffset((prev) => prev + res.items.length);
+
+    setLoading(false);
   };
+
+  /* ---------------------------------------------
+     SELECTION LOGIC
+  --------------------------------------------- */
+  const handleItemClick = (id: string) => {
+    const isSelected = selectedValues.includes(id);
+
+    if (isSelected) {
+      onSelect(selectedValues.filter((v) => v !== id));
+    } else if (canSelectMore) {
+      onSelect([...selectedValues, id]);
+    }
+  };
+
+  const renderValue = (selected: string[]) => {
+    if (!selected.length) return <em>{placeholder}</em>;
+
+    const labels = selected
+      .map((id) => displayedOptions.find((o) => o.id === id)?.label)
+      .filter(Boolean);
+
+    if (labels.length <= 2) return labels.join(", ");
+    return `${labels.length} selected`;
+  };
+
+  /* ---------------------------------------------
+     RENDER
+  --------------------------------------------- */
+  return (
+    <FormControl fullWidth>
+      <Select
+        multiple
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)}
+        value={selectedValues}
+        onChange={() => {}}
+        disabled={disabled}
+        displayEmpty
+        renderValue={renderValue}
+        input={<OutlinedInput />}
+        MenuProps={{
+          PaperProps: { style: { maxHeight: 360 } },
+          disableAutoFocusItem: true,
+        }}
+      >
+        {/* SEARCH BOX */}
+        <Box
+          sx={{ px: 1, pb: 1 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <TextField
+            inputRef={searchInputRef}
+            fullWidth
+            placeholder="Search..."
+            variant="standard"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </Box>
+
+        {/* OPTIONS */}
+        {displayedOptions.map((opt) => {
+          const selected = selectedValues.includes(opt.id);
+          const disabledItem = !selected && !canSelectMore;
+
+          return (
+            <MenuItem
+              key={opt.id}
+              disabled={disabledItem}
+              onClick={() => handleItemClick(opt.id)}
+            >
+              <Checkbox checked={selected} />
+              <ListItemText primary={opt.label} />
+            </MenuItem>
+          );
+        })}
+
+        {/* EMPTY */}
+        {!loading && displayedOptions.length === 0 && (
+          <MenuItem disabled>
+            <ListItemText primary="No results found" />
+          </MenuItem>
+        )}
+
+        {/* LOAD MORE */}
+        {hasMore && (
+          <MenuItem
+            onClick={handleLoadMore}
+            disabled={loading}
+            sx={{
+              justifyContent: "center",
+              fontStyle: "italic",
+            }}
+          >
+            {loading ? "Loading..." : "Load more"}
+          </MenuItem>
+        )}
+      </Select>
+    </FormControl>
+  );
 };
