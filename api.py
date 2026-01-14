@@ -1247,8 +1247,8 @@ async def get_only_contract_workspace_list(
 
         response = c.get_contract_workspaces_only(
             contract_workspace_name=name,
-            offset=offset,
-            limit=limit
+            # offset=offset,
+            # limit=limit
         )
 
         return JSONResponse(
