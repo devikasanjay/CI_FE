@@ -129,6 +129,7 @@ const Chat = () => {
   const [contractDropdownType, setContractDropdownType] = useState<"workspace_name" | "ariba_ws_name">("workspace_name");
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [workspaceAribaNameOpts, setWorkspaceAribaNameOpts] = useState<ContractWorkspace[]>([]);
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
 
   const [selectedMode, setSelectedMode] = useState<string>("standard");
   const [citationLoadingMessageId, setCitationLoadingMessageId] = useState<string | null>(null);
@@ -271,8 +272,8 @@ const Chat = () => {
       role: "user",
       content: question,
       date: new Date().toISOString(),
-      contract_id: selectedWorkspace[0].id,
-      contract_workspace: selectedWorkspace[0].id,
+      contract_id: selectedWorkspaceIds,
+      contract_workspace: selectedWorkspaceIds,
     };
 
     let request: ConversationRequest;
@@ -294,7 +295,7 @@ const Chat = () => {
             ...conversation.messages.filter((answer) => answer.role !== ERROR),
           ],
           contract_workspaces: selectedWorkspace.length > 0
-            ? selectedWorkspace.map((workspace) => workspace.id)
+            ? selectedWorkspaceIds
             : [],
         };
       }
@@ -302,7 +303,7 @@ const Chat = () => {
       request = {
         messages: [userMessage].filter((answer) => answer.role !== ERROR),
         contract_workspaces: selectedWorkspace.length > 0
-          ? selectedWorkspace.map((workspace) => workspace.id)
+          ? selectedWorkspaceIds
           : [],
       };
       setMessages(request.messages);
@@ -314,7 +315,7 @@ const Chat = () => {
         ? await historyGenerate(
           request,
           abortController.signal,
-          selectedWorkspace[0].id,
+          selectedWorkspaceIds,
           conversationId,
           selectedWorkspace,
           selectedMode
@@ -322,7 +323,7 @@ const Chat = () => {
         : await historyGenerate(
           request,
           abortController.signal,
-          selectedWorkspace[0].id,
+          selectedWorkspaceIds,
           undefined,
           selectedWorkspace,
           selectedMode
@@ -340,8 +341,8 @@ const Chat = () => {
           role: ERROR,
           content: `There was an error generating a response. Chat history can't be saved at this time. ${errorResponseMessage}`,
           date: new Date().toISOString(),
-          contract_id: selectedWorkspace[0].id,
-          contract_workspace: selectedWorkspace[0].id,
+          contract_id: selectedWorkspaceIds,
+          contract_workspace: selectedWorkspaceIds,
         };
         let resultConversation;
         if (conversationId) {
@@ -526,8 +527,8 @@ const Chat = () => {
           role: ERROR,
           content: errorMessage,
           date: new Date().toISOString(),
-          contract_id: selectedWorkspace[0].id,
-          contract_workspace: selectedWorkspace[0].id,
+          contract_id: selectedWorkspaceIds,
+          contract_workspace: selectedWorkspaceIds,
         };
         let resultConversation;
         if (conversationId) {
@@ -552,8 +553,8 @@ const Chat = () => {
               role: ERROR,
               content: errorMessage,
               date: new Date().toISOString(),
-              contract_id: selectedWorkspace[0].id,
-              contract_workspace: selectedWorkspace[0].id,
+              contract_id: selectedWorkspaceIds,
+              contract_workspace: selectedWorkspaceIds,
             };
             setMessages([...messages, userMessage, errorChatMsg]);
             setIsLoading(false);
@@ -682,8 +683,8 @@ const Chat = () => {
                 role: ERROR,
                 content: errorMessage,
                 date: new Date().toISOString(),
-                contract_id: selectedWorkspace[0].id,
-                contract_workspace: selectedWorkspace[0].id,
+                contract_id: selectedWorkspaceIds,
+                contract_workspace: selectedWorkspaceIds,
               };
               if (!appStateContext?.state.currentChat?.messages) {
                 const err: Error = {
@@ -1063,34 +1064,36 @@ const Chat = () => {
       term: string,
       offset: number
   ) => {
-      const response = await fetchWithAuth(`${host}/contract-mgmt/only_contracts?${queryParams.toString()}`, {
-			method: 'GET',
-		});
-		const data = await response.json();
-		return data;
+      const response = await getContractsForDropdowns(
+			term || "",
+			offset,
+			PAGE_SIZE
+		);
+		return response?.data;
   };
 
   // NEW: Server-side search helpers for dropdowns
-  const searchWorkspacesByCWName = async (term: string, offset =0) => {
+  const searchWorkspacesByCWName = async (term: string, offset = 0) => {
       const data = await fetchContractsForDropdown(term, offset);
       return {
-          data: data.contracts.map((c.any) => ({
-              id: c.contract_id.toString(),
-              label: c.contract_workspace,
-          })),
-          hasMore: data.has_more,
-  };
+        data: (data?.contracts || []).map((c: any) => ({
+          id: c.contract_id.toString(),
+          label: c.contract_workspace,
+        })),
+        hasMore: data?.has_more ?? false,
+      };
+    };
 
-
-  const searchWorkspacesByAribaName = async (term: string, offset =0) => {
+  const searchWorkspacesByAribaName = async (term: string, offset = 0) => {
       const data = await fetchContractsForDropdown(term, offset);
       return {
-          data: data.contracts.map((c.any) => ({
-              id: c.contract_id.toString(),
-              label: c.contract_workspace || contract.contract_workspace || "Unnamed workspace",
-          })),
-          hasMore: data.has_more,
-  };
+        data: (data?.contracts || []).map((c: any) => ({
+          id: c.contract_id.toString(),
+          label: c.ariba_ws_name || c.contract_workspace || "Unnamed workspace",
+        })),
+        hasMore: data?.has_more ?? false,
+      };
+    };
 
   return (
     <Grid container>
