@@ -180,65 +180,6 @@ const Chat = () => {
     }, 500);
   };
 
-  // CW Name / ID dropdown
-  const [selectedCWWorkspaces, setSelectedCWWorkspaces] = useState<
-      { id: string; label: string }[]
-    >([]);
-
-  // Ariba Name dropdown
-  const [selectedAribaWorkspaces, setSelectedAribaWorkspaces] = useState<
-    { id: string; label: string }[]
-  >([]);
-
-
-  const handleCWWorkspaceChange = (selectedIds: string[]) => {
-      setSelectedCWWorkspaces((prev) =>
-        prev.filter((w) => selectedIds.includes(w.id))
-      );
-    };
-
-  const handleAribaWorkspaceChange = (selectedIds: string[]) => {
-      setSelectedAribaWorkspaces((prev) =>
-        prev.filter((w) => selectedIds.includes(w.id))
-      );
-    };
-
-
-  const searchByCWName = async (
-      term: string,
-      offset: number,
-      limit: number
-    ) => {
-      const res = await getContractsForDropdowns(term, offset, limit);
-      const payload = res.data;
-
-      return {
-        options: payload.contracts.map((c: any) => ({
-          id: String(c.contract_id),
-          label: c.contract_workspace,
-        })),
-        hasMore: payload.has_more,
-      };
-    };
-
-  const searchByAribaName = async (
-      term: string,
-      offset: number,
-      limit: number
-    ) => {
-      const res = await getContractsForDropdowns(term, offset, limit);
-      const payload = res.data;
-
-      return {
-        options: payload.contracts.map((c: any) => ({
-          id: String(c.contract_id),
-          label: c.ariba_contract_ws_name, // 👈 DIFFERENCE
-        })),
-        hasMore: payload.has_more,
-      };
-    };
-
-
   const handleModeChange = (mode: string) => {
     setSelectedMode(mode);
     setMessages([]);
@@ -1092,6 +1033,10 @@ const Chat = () => {
     dispatch(hideLoader());
   };
 
+  useEffect(() => {
+    fetchWorkspaces();
+  }, []);
+
   const handleWorkspaceChange = (selectedIds: string[]) => {
     if (!Array.isArray(selectedIds)) {
       console.error("Expected array of workspace IDs");
@@ -1116,19 +1061,42 @@ const Chat = () => {
     setContractDropdownType(value);
   }
 
-  const CONTRACT_PAGE_SIZE = 100;
+  const fetchWorkspaces = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const contractsData =  await getContractsForDropdowns("");
+      const analyzedContracts = contractsData?.data?.contracts;
 
-  const handleContractSearch = async (
-      searchTerm: string,
-      offset: number
-  ) => {
-      return await getContractsForDropdowns(
-          searchTerm,
-          offset,
-          CONTRACT_PAGE_SIZE
-          );
-      };
+      const contractsWSNameOpts = analyzedContracts?.map((contract: any) => ({
+        id: contract.contract_id.toString() || "",
+        label: contract.contract_workspace || "Unnamed Workspace",
+      })) || [];
+      setWorkspaces(contractsWSNameOpts);
 
+      const contractsAribaNameOpts = analyzedContracts.map((contract: any) => ({
+        id: contract.contract_id.toString(),
+        label: contract.ariba_contract_ws_name || contract.contract_workspace || "Unnamed Workspace",
+      }));
+      setWorkspaceAribaNameOpts(contractsAribaNameOpts);
+
+      if (contractsWSNameOpts.length > 0) {
+        if ((workspaceFromStore as any).contract_id) {
+          const payload: ContractWorkspace = {
+            id: (workspaceFromStore as any).contract_id.toString() || "",
+            label: (workspaceFromStore as any).contract_worspace,
+          };
+          setSelectedWorkspace([payload]);
+        } else {
+          setSelectedWorkspace(contractsWSNameOpts[0] || {});
+        }
+      }
+    } catch (err) {
+      setError("Failed to load workspaces");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // NEW: Server-side search helpers for dropdowns
   const searchWorkspacesByCWName = async (term: string): Promise<ContractWorkspace[]> => {
@@ -1205,24 +1173,30 @@ const Chat = () => {
               </Typography>
               <Box sx={{ width: "300px" }}>
                 <MultiSelectSearchableDropdown
-                  selectedValues={selectedCWWorkspaces.map((w) => w.id)}
-                  onSelect={handleCWWorkspaceChange}
+                  options={workspaces}
+                  selectedValues={Array.isArray(selectedWorkspace)
+                    ? selectedWorkspace.map((workspace) => workspace.id)
+                    : []
+                  }
+                  onSelect={handleWorkspaceChange}
                   placeholder="Contract Workspaces By Id"
                   selectionLimit={50}
-                  pageSize={100}
-                  debounceMs={400}
                   onSearchRequest={searchWorkspacesByCWName}
+                  debounceMs={400}
                 />
               </Box>
               <Box sx={{ width: "300px" }}>
                 <MultiSelectSearchableDropdown
-                  selectedValues={selectedAribaWorkspaces.map((w) => w.id)}
-                  onSelect={handleAribaWorkspaceChange}
+                  options={workspaceAribaNameOpts}
+                  selectedValues={Array.isArray(selectedWorkspace)
+                    ? selectedWorkspace.map((workspace) => workspace.id)
+                    : []
+                  }
+                  onSelect={handleWorkspaceChange}
                   placeholder="Contract Workspaces By Name"
                   selectionLimit={50}
-                  pageSize={100}
-                  debounceMs={400}
                   onSearchRequest={searchWorkspacesByAribaName}
+                  debounceMs={400}
                 />
               </Box>
             </Box>
