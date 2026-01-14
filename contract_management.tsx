@@ -1563,7 +1563,6 @@ const ContractManagement = () => {
 										</Tooltip>
 									</Box>
 									<MultiSelectSearchableDropdown
-										options={templateOptions}
 										selectedValues={Array.isArray(selectedTemplates) ? selectedTemplates.map(t => t.panel_id) : []}
 										onSelect={handleTemplateChange}
 										placeholder="Select Your Analysis Templates"
