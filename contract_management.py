@@ -462,8 +462,8 @@ class ContractManagement:
                 .order_by(subq.c.contract_workspace.asc())
             )
 
-            logger.info(f"Offset is {offset} and limit is {limit}")
-            query = query.limit(limit).offset(offset)
+            # logger.info(f"Offset is {offset} and limit is {limit}")
+            # query = query.limit(limit).offset(offset)
 
             contracts_data = query.all()
             logger.info(f"Contracts data retrieved: {len(contracts_data)} records")
@@ -499,43 +499,14 @@ class ContractManagement:
                 count_query = count_query.filter(
                     Contract.contract_workspace.ilike(f"%{contract_workspace_name}%")
                 )
-            if contract_types:
-                count_query = count_query.filter(Contract.contract_type.in_(contract_types))
-            if sharing_type:
-                if sharing_type == "uploaded":
-                    count_query = count_query.filter(Contract.user_id == self.user_id)
-                elif sharing_type == "shared":
-                    count_query = count_query.filter(
-                        or_(
-                            and_(
-                                Contract.user_id != self.user_id,
-                                ContractDepartment.department_id.isnot(None),
-                                ContractDepartment.department_id.in_(user_department_ids),
-                                ~Contract.ariba_contract_workspace.in_(
-                                    oe_workspace_list) if oe_workspace_list else True,
-                                ~Contract.ariba_contract_workspace.in_(
-                                    category_workspace_list) if category_workspace_list else True
-                            ),
-                            and_(
-                                Contract.user_id != self.user_id,
-                                literal(15).in_(user_department_ids),
-                                Contract.source == "CPI",
-                                Contract.status != "Failed",
-                                ~Contract.ariba_contract_workspace.in_(
-                                    oe_workspace_list) if oe_workspace_list else True,
-                                ~Contract.ariba_contract_workspace.in_(
-                                    category_workspace_list) if category_workspace_list else True
-                            )
-                        )
-                    )
 
             total_count = count_query.scalar()
 
             return {
                 "contracts": processed_contracts,
-                "limit": limit,
-                "offset": offset,
-                "has_more": (offset + len(processed_contracts)) < total_count
+                # "limit": limit,
+                # "offset": offset,
+                # "has_more": (offset + len(processed_contracts)) < total_count
             }
 
         finally:
