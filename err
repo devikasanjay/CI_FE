@@ -1,46 +1,3 @@
-Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-deprecations.ts:9  ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
-warnOnce @ deprecations.ts:9
-logDeprecation @ deprecations.ts:14
-logV6DeprecationWarnings @ deprecations.ts:26
-(anonymous) @ index.tsx:816
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-performSyncWorkOnRoot @ react-dom.development.js:26115
-flushSyncCallbacks @ react-dom.development.js:12042
-commitRootImpl @ react-dom.development.js:26998
-commitRoot @ react-dom.development.js:26721
-finishConcurrentRender @ react-dom.development.js:26020
-performConcurrentWorkOnRoot @ react-dom.development.js:25848
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-deprecations.ts:9  ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
-warnOnce @ deprecations.ts:9
-logDeprecation @ deprecations.ts:14
-logV6DeprecationWarnings @ deprecations.ts:37
-(anonymous) @ index.tsx:816
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-performSyncWorkOnRoot @ react-dom.development.js:26115
-flushSyncCallbacks @ react-dom.development.js:12042
-commitRootImpl @ react-dom.development.js:26998
-commitRoot @ react-dom.development.js:26721
-finishConcurrentRender @ react-dom.development.js:26020
-performConcurrentWorkOnRoot @ react-dom.development.js:25848
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
 2MultiSelectSearchableDropdown.tsx:174  Uncaught TypeError: displayedOptions.every is not a function
     at MultiSelectSearchableDropdown.tsx:174:29
     at updateMemo (react-dom.development.js:16427:19)
@@ -259,18 +216,3 @@ ErrorBoundary.tsx:26  Error caught by Error Boundary: TypeError: displayedOption
     at beginWork (react-dom.development.js:21640:16)
     at beginWork$1 (react-dom.development.js:27465:14)
     at performUnitOfWork (react-dom.development.js:26596:12) {componentStack: '\n    at MultiSelectSearchableDropdown (http://44.7…s/@griffel_react.js?v=4472897c:2634:3)\n    at App'}
-componentDidCatch @ ErrorBoundary.tsx:26
-callback @ react-dom.development.js:18785
-callCallback @ react-dom.development.js:15036
-commitUpdateQueue @ react-dom.development.js:15057
-commitLayoutEffectOnFiber @ react-dom.development.js:23403
-commitLayoutMountEffects_complete @ react-dom.development.js:24727
-commitLayoutEffects_begin @ react-dom.development.js:24713
-commitLayoutEffects @ react-dom.development.js:24651
-commitRootImpl @ react-dom.development.js:26862
-commitRoot @ react-dom.development.js:26721
-finishConcurrentRender @ react-dom.development.js:25931
-performConcurrentWorkOnRoot @ react-dom.development.js:25848
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
