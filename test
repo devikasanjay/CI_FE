@@ -1,17 +1,272 @@
-const safeDisplayedOptions = Array.isArray(displayedOptions)
-  ? displayedOptions
-  : [];
+import * as React from "react";
+import {
+  Box,
+  Checkbox,
+  FormControl,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  SelectChangeEvent,
+  TextField,
+} from "@mui/material";
 
-const areAllFilteredSelected = React.useMemo(() => {
-  if (safeDisplayedOptions.length === 0) return false;
-  return safeDisplayedOptions.every(opt =>
-    selectedValues.includes(opt.id)
-  );
-}, [selectedValues, safeDisplayedOptions]);
+interface ContractWorkspace {
+  id: string;
+  label: string;
+}
 
-const areSomeFilteredSelected = React.useMemo(() => {
-  if (safeDisplayedOptions.length === 0) return false;
-  return safeDisplayedOptions.some(opt =>
-    selectedValues.includes(opt.id)
+interface Props {
+  options: ContractWorkspace[];
+  selectedValues: string[];
+  onSelect: (selected: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  selectionLimit?: number;
+
+  // Server-side search
+  onSearchRequest?: (term: string) => Promise<ContractWorkspace[]>;
+  debounceMs?: number;
+}
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 300,
+    },
+  },
+};
+
+export const MultiSelectSearchableDropdown: React.FC<Props> = ({
+  options,
+  selectedValues,
+  onSelect,
+  placeholder = "Select options",
+  disabled = false,
+  selectionLimit = 0,
+  onSearchRequest,
+  debounceMs = 350,
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searching, setSearching] = React.useState(false);
+
+  // ALWAYS keep this an array
+  const [displayedOptions, setDisplayedOptions] = React.useState<
+    ContractWorkspace[]
+  >([]);
+
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const lastReqId = React.useRef(0);
+
+  // ---------- SAFE ARRAY ----------
+  const safeOptions = React.useMemo(
+    () => (Array.isArray(displayedOptions) ? displayedOptions : []),
+    [displayedOptions]
   );
-}, [selectedValues, safeDisplayedOptions]);
+
+  // ---------- OPEN / CLOSE ----------
+  React.useEffect(() => {
+    if (!open) {
+      setSearchTerm("");
+      setSearching(false);
+      setDisplayedOptions([]);
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    if (open && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  // ---------- INITIAL LOAD ----------
+  React.useEffect(() => {
+    if (!open) return;
+
+    const loadInitial = async () => {
+      if (!onSearchRequest) {
+        setDisplayedOptions(Array.isArray(options) ? options : []);
+        return;
+      }
+
+      setSearching(true);
+      const reqId = ++lastReqId.current;
+
+      try {
+        const result = await onSearchRequest("");
+        if (reqId === lastReqId.current) {
+          setDisplayedOptions(Array.isArray(result) ? result : []);
+        }
+      } catch (e) {
+        console.error("Initial dropdown fetch failed", e);
+        setDisplayedOptions([]);
+      } finally {
+        if (reqId === lastReqId.current) setSearching(false);
+      }
+    };
+
+    loadInitial();
+  }, [open]);
+
+  // ---------- SEARCH ----------
+  React.useEffect(() => {
+    if (!open || !onSearchRequest) return;
+
+    const handler = setTimeout(async () => {
+      setSearching(true);
+      const reqId = ++lastReqId.current;
+
+      try {
+        const result = await onSearchRequest(searchTerm.trim());
+        if (reqId === lastReqId.current) {
+          setDisplayedOptions(Array.isArray(result) ? result : []);
+        }
+      } catch (e) {
+        console.error("Dropdown search failed", e);
+        setDisplayedOptions([]);
+      } finally {
+        if (reqId === lastReqId.current) setSearching(false);
+      }
+    }, debounceMs);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, debounceMs, onSearchRequest, open]);
+
+  // ---------- SELECTION HELPERS ----------
+  const canSelectMore =
+    selectionLimit === 0 || selectedValues.length < selectionLimit;
+
+  const availableSlots =
+    selectionLimit === 0
+      ? Infinity
+      : Math.max(0, selectionLimit - selectedValues.length);
+
+  const areAllFilteredSelected = React.useMemo(() => {
+    if (safeOptions.length === 0) return false;
+    return safeOptions.every((opt) => selectedValues.includes(opt.id));
+  }, [safeOptions, selectedValues]);
+
+  const areSomeFilteredSelected = React.useMemo(() => {
+    if (safeOptions.length === 0) return false;
+    return safeOptions.some((opt) => selectedValues.includes(opt.id));
+  }, [safeOptions, selectedValues]);
+
+  // ---------- HANDLERS ----------
+  const handleItemClick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const isSelected = selectedValues.includes(id);
+
+    if (!isSelected && !canSelectMore) return;
+
+    const next = isSelected
+      ? selectedValues.filter((v) => v !== id)
+      : [...selectedValues, id];
+
+    onSelect(next);
+  };
+
+  const handleSelectAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const ids = safeOptions.map((o) => o.id);
+
+    if (areAllFilteredSelected) {
+      onSelect(selectedValues.filter((id) => !ids.includes(id)));
+      return;
+    }
+
+    const toAdd = ids.filter((id) => !selectedValues.includes(id));
+    const final =
+      selectionLimit === 0
+        ? [...selectedValues, ...toAdd]
+        : [...selectedValues, ...toAdd.slice(0, availableSlots)];
+
+    onSelect(final);
+  };
+
+  const renderValue = (selected: string[]) => {
+    if (!selected.length) return <em>{placeholder}</em>;
+    if (selected.length <= 2) return selected.join(", ");
+    return `${selected.length} selected`;
+  };
+
+  // ---------- RENDER ----------
+  return (
+    <FormControl fullWidth>
+      <Select
+        multiple
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)}
+        value={selectedValues}
+        onChange={() => {}}
+        input={<OutlinedInput />}
+        displayEmpty
+        disabled={disabled}
+        renderValue={(selected) => renderValue(selected as string[])}
+        MenuProps={MenuProps}
+      >
+        {/* SEARCH */}
+        <Box sx={{ p: 1 }} onClick={(e) => e.stopPropagation()}>
+          <TextField
+            inputRef={searchInputRef}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search..."
+            variant="standard"
+            fullWidth
+          />
+        </Box>
+
+        {/* SELECT ALL */}
+        {safeOptions.length > 0 && (
+          <MenuItem onClick={handleSelectAll}>
+            <Checkbox
+              checked={areAllFilteredSelected}
+              indeterminate={
+                areSomeFilteredSelected && !areAllFilteredSelected
+              }
+            />
+            <ListItemText primary="Select All" />
+          </MenuItem>
+        )}
+
+        {/* LOADING */}
+        {searching && (
+          <MenuItem disabled>
+            <ListItemText primary="Searching..." />
+          </MenuItem>
+        )}
+
+        {/* OPTIONS */}
+        {!searching &&
+          safeOptions.map((opt) => {
+            const isSelected = selectedValues.includes(opt.id);
+            return (
+              <MenuItem
+                key={opt.id}
+                onClick={(e) => handleItemClick(opt.id, e)}
+                disabled={!isSelected && !canSelectMore}
+              >
+                <Checkbox checked={isSelected} />
+                <ListItemText primary={opt.label} />
+              </MenuItem>
+            );
+          })}
+
+        {/* EMPTY */}
+        {!searching && safeOptions.length === 0 && (
+          <MenuItem disabled>
+            <ListItemText primary="No results found" />
+          </MenuItem>
+        )}
+      </Select>
+    </FormControl>
+  );
+};
